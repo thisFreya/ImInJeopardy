@@ -1,6 +1,6 @@
-﻿GameTitle,Apples,Pears,Grapes,OtherCategory,AnotherCategory,
-100,Add question descriptions here,Question $C$2,Question $D$2,Question $E$2,Question $F$2,
-200,Question $B$3,Question $C$3,Question $D$3,,Question $F$3,
-300,Question $B$4,Question $C$4,,Question $E$4,Question $F$4,
-400,Question $B$5,"Gif links https://media1.tenor.com/m/6CLuMVze_qwAAAAd/lego-star-wars-qui-gon-jinn.gif",Question $D$5,,Question $F$5,
+﻿GameTitle,Apples,Pears,Grapes,OtherCategory,AnotherCategory
+100,Add question descriptions here,Question $C$2,Question $D$2,Question $E$2,Question $F$2
+200,Question $B$3,Question $C$3,Question $D$3,,Question $F$3
+300,Question $B$4,Question $C$4,,Question $E$4,Question $F$4
+400,Question $B$5,"Gif links https://media1.tenor.com/m/6CLuMVze_qwAAAAd/lego-star-wars-qui-gon-jinn.gif",Question $D$5,,Question $F$5
 500,"You can embed youtube links https://www.youtube.com/watch?v=jNQXAC9IVRw","And image links https://images.pexels.com/photos/30800337/pexels-photo-30800337/free-photo-of-playful-border-collie-enjoying-snowy-winter-day.jpeg",Question $D$6,Question $E$6,Question $F$6

@@ -9,6 +9,18 @@
                 justify-content: center;
             }
 
+            @media only screen and (resolution >= 2dppx) {
+                body {
+                    zoom: 200%;
+                }
+            }
+
+            @media only screen and (resolution >= 1.5dppx) {
+                body {
+                    zoom: 150%;
+                }
+            }
+
             #homeContent {
                 position: absolute;
                 display: flex;
@@ -51,14 +63,14 @@
                 display: none;  /* Safari and Chrome */
             }
 
-            @media (max-width: 1330px) {
+            @media only screen and (max-width: 1380px) {
                 #pageContent {
-                    max-width: 60%;
+                    max-width: 80%;
                     transition: max-width 0.25s ease-in-out;
                 }
             }
 
-            @media (max-width: 980px) {
+            @media only screen and (max-width: 980px) {
                 #pageContent {
                     max-width: 100%;
                 }
@@ -1350,7 +1362,7 @@
                 }
             }
 
-            const blobUrl = URL.createObjectURL(new Blob([`GameTitle,Apples,Pears,Grapes,OtherCategory,AnotherCategory,\r\n100,Add question descriptions here,Question $C$2,Question $D$2,Question $E$2,Question $F$2,\r\n200,Question $B$3,Question $C$3,Question $D$3,,Question $F$3,\r\n300,Question $B$4,Question $C$4,,Question $E$4,Question $F$4,\r\n400,Question $B$5,"Gif links https://media1.tenor.com/m/6CLuMVze_qwAAAAd/lego-star-wars-qui-gon-jinn.gif",Question $D$5,,Question $F$5,\r\n500,"You can embed youtube links https://www.youtube.com/watch?v=jNQXAC9IVRw","And image links https://images.pexels.com/photos/30800337/pexels-photo-30800337/free-photo-of-playful-border-collie-enjoying-snowy-winter-day.jpeg",Question $D$6,Question $E$6,Question $F$6`], {
+            const blobUrl = URL.createObjectURL(new Blob([`GameTitle,Apples,Pears,Grapes,OtherCategory,AnotherCategory\r\n100,Add question descriptions here,Question $C$2,Question $D$2,Question $E$2,Question $F$2\r\n200,Question $B$3,Question $C$3,Question $D$3,,Question $F$3\r\n300,Question $B$4,Question $C$4,,Question $E$4,Question $F$4\r\n400,Question $B$5,"Gif links https://media1.tenor.com/m/6CLuMVze_qwAAAAd/lego-star-wars-qui-gon-jinn.gif",Question $D$5,,Question $F$5\r\n500,"You can embed youtube links https://www.youtube.com/watch?v=jNQXAC9IVRw","And image links https://images.pexels.com/photos/30800337/pexels-photo-30800337/free-photo-of-playful-border-collie-enjoying-snowy-winter-day.jpeg",Question $D$6,Question $E$6,Question $F$6`], {
                 type: "text/csv"
             }));
 
