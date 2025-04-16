@@ -1,0 +1,1378 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title>I'm in Jepoardy (!)</title>
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.5/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-SgOJa3DmI69IUzQ2PVdRZhwQ+dy64/BUtbMJw1MZ8t5HZApcHrRKUc4W0kG879m7" crossorigin="anonymous">
+        <style>
+            body {
+                justify-content: center;
+            }
+
+            #homeContent {
+                position: absolute;
+                display: flex;
+                justify-content: center;
+                top: 0;
+                right: 0;
+                bottom: 0;
+                left: 0;
+            }
+            
+            #pageContent {
+                display: flex;
+                flex-direction: column;
+                max-width: 840px;
+                transition: max-width 0.25s ease-in-out;
+                -moz-box-shadow: var(--bs-box-shadow);
+                -webkit-box-shadow: var(--bs-box-shadow);
+                box-shadow: var(--bs-box-shadow);
+                padding: 2rem 2rem 0rem 2rem;
+            }
+
+            #gameboard,
+            #game-saves {
+                overflow-y: scroll;
+            }
+
+            #pageContent > * {
+                display: flex;
+                flex-grow: 1;
+            }
+
+            #pageContent > *,
+            #game-saves {
+                -ms-overflow-style: none;  /* Internet Explorer 10+ */
+                scrollbar-width: none;  /* Firefox */
+            }
+
+            #pageContent > *::-webkit-scrollbar,
+            #game-saves::-webkit-scrollbar { 
+                display: none;  /* Safari and Chrome */
+            }
+
+            @media (max-width: 1330px) {
+                #pageContent {
+                    max-width: 60%;
+                    transition: max-width 0.25s ease-in-out;
+                }
+            }
+
+            @media (max-width: 840px) {
+                #pageContent {
+                    max-width: 100%;
+                }
+            }
+
+            #file-manager {
+                flex-direction: column;
+            }
+
+            .full-filedrop {
+                display: flex;
+                flex-grow: 1;
+                margin: 5rem;
+                border-color: var(--bs-border-color);
+                border-radius: 0.5rem;
+                border-style: var(--bs-border-style);
+                background-color: var(--bs-tertiary-bg);
+                align-content: center;
+                min-height: max(20%, 10rem);
+            }
+
+            .full-filedrop a {
+                display: flex;
+                flex: 1 1 auto;
+                align-items: center;
+                justify-content: space-around;
+            }
+
+            .full-filedrop h4 {
+                display: flex;
+                align-content: center;
+                text-align: center;
+                color: var(--bs-secondary-color);
+                max-width: 60%;
+            }
+
+            .game,
+            .game :is(.gameboard, .gameHead, .gameCategories, .categoryHeads,
+                .category, .categoryHead, .categoryBody,
+                .question, .btn-question) {
+                display: flex;
+                flex-direction: column;
+            }
+
+            .game .categoryHeads {
+                flex-direction: row;
+                justify-content: space-between;
+            }
+
+            .game .gameCategories {
+                flex-direction: row;
+                justify-content: center;
+                align-items: end;
+                flex-wrap: wrap;
+            }
+
+            .game .category {
+                flex-direction: column;
+                margin: 0.5rem;
+                min-width: 5rem;
+                max-width: 20%;
+            }
+
+            .game .categoryHead {
+                flex-direction: column;
+                text-align: center;
+                justify-content: end;
+                flex-shrink: 1;
+            }
+
+            .game .categoryBody {
+                flex-direction: column;
+            }
+
+            .game .btn-question {
+                border-radius: 0.15rem;
+                background-color: var(--bs-body-bg);
+                border-color: var(--bs-border-color);
+                color: var(--bs-body-color);
+                transition-duration: 0.05s, 0.05s, 0.05s, 0.05s;
+            }
+            
+            .game .btn-question:hover {
+                background-color: color-mix(in srgb, var(--bs-body-bg), var(--bs-highlight-color) 5%);
+                color: var(--bs-body-color);
+            }
+
+            .game .btn-question:active {
+                background-color: color-mix(in srgb, var(--bs-body-bg), var(--bs-highlight-color) 10%);
+                border-color: color-mix(in srgb, var(--bs-border-color), var(--bs-highlight-color) 50%);
+                color: var(--bs-body-color);
+            }
+
+            .game .btn-question.answered {
+                opacity: 0.33;
+            }
+
+            .game .btn-dumb-question {
+                opacity: 0;
+                cursor: default;
+                pointer-events: none;
+            }
+
+            #qPopupHead {
+                display: flex;
+                justify-content: space-between;
+            }
+
+            #qPopupHead.big-name {
+                flex-direction: column;
+                align-items: end;
+            }
+
+            #qPopupHeadEm {
+                text-align: left;
+                display: flex;
+                flex: 1 1 auto;
+            }
+
+            #qPopupHeadNEm {
+                display: flex;
+            }
+
+            #qPopupHead.big-name #qPopupHeadNEm {
+                text-align: right;
+            }
+
+            #qPopupFoot {
+                display: flex;
+                flex-direction: row;
+                justify-content: space-between;
+            }
+
+            #qPopupPlayers {
+                display: flex;
+                flex-direction: row;
+                justify-content: left;
+                flex-wrap: wrap;
+            }
+
+            #bottom-bar {
+                display: flex;
+                flex-grow: 0;
+                flex-direction: column;
+                margin-top: 0rem;
+                margin-bottom: 1rem;
+            }
+
+            #bottom-bar.hidden {
+                max-height: 0px;
+                margin-top: 2rem;
+            }
+
+            #bottom-bar > hr {
+                margin-top: 0rem;
+                margin-bottom: 1rem;
+            }
+
+            #bottom-bar > div {
+                display: flex;
+                flex-direction: row;
+                justify-content: space-between;
+                align-items: center;
+            }
+
+            .game-save {
+                display: flex;
+                flex-direction: row;
+                justify-content: space-between;
+                align-items: center;
+                margin-top: 0.5rem;
+                margin-bottom: 0.5rem;
+            }
+
+            .game-save:has(> .btn-delete-game:is(:hover)) {
+                color: var(--bs-bn-color);
+                background-color: var(--bs-btn-bg);
+                border-color: var(--bs-btn-border-color);
+            }
+
+            .game-save-details {
+                display: flex;
+                flex-direction: row;
+                align-items: center;
+            }
+
+            .game-save-details div {
+                display: flex;
+                margin-left: 0.25rem;
+                margin-right: 0.25rem;
+            }
+
+            .game-save-details div.vr {
+                padding-left: 0.05rem;
+                padding-right: 0.05rem;
+            }
+
+            .ghead-input-head {
+                border-radius: 0px !important;
+            }
+
+            .ghead-input {
+                border-left: none;
+                border-right: none;
+                border-top: none;
+                border-radius: 0px !important;
+            }
+            
+            .gamePlayersContainer {
+                display: flex;
+                flex-direction: row;
+                justify-content: space-between;
+                align-items: top;
+                padding: 0.5rem;
+                transition: max-height 0.1s ease-in-out;
+            }
+
+            .gamePlayers {
+                display: flex;
+                flex-direction: row;
+                justify-content: space-evenly;
+                align-items: center;
+                flex-grow: 1;
+                flex-wrap: wrap;
+                transition: max-height 0.1s ease-in-out;
+            }
+
+            .player,
+            .playerQPop {
+                display: flex;
+                flex-direction: column;
+                border-color: var(--bs-border-color);
+                border-style: var(--bs-border-style);
+                border-width: var(--bs-border-width);
+                border-radius: var(--bs-border-radius);
+                margin-left: 0.25rem;
+                margin-right: 0.25rem;
+            }
+
+            .player .p-input-group {
+                display: flex;
+                flex-shrink: 1;
+                flex-grow: 1;
+            }
+
+            .player .p-btm-group {
+                display: flex;
+                flex-direction: row;
+                justify-content: right;
+            }
+
+            .player .p-btm-group button {
+                border-top-right-radius: 0;
+                border-top-left-radius: 0;
+                border-bottom-left-radius: 0;
+                border-color: var(--bs-border-color);
+                border-right: 0;
+                border-top: 0;
+                border-bottom: 0;
+                transition: max-width 0.1s ease-in-out;
+            }
+
+            .player .p-btm-group div {
+                flex-grow: 1;
+            }
+
+            .player .p-input {
+                border-left: none;
+                border-right: none;
+                border-top: none;
+                border-bottom-right-radius: 0px !important;
+                border-bottom-left-radius: 0px !important;
+                min-width: 0;
+                flex-shrink: 1;
+                flex-grow: 1;
+                text-align: center;
+            }
+
+            .player .p-score {
+                display: flex;
+                text-align: center;
+                justify-content: center;
+                padding-top: 0.15rem;
+                padding-bottom: 0.15rem;
+            }
+
+            .addPlayerContainer {
+                display: flex;
+                flex-direction: column;
+                justify-content: left;
+            }
+
+            .p-qpop-name {
+                border-color: var(--bs-border-color);
+                border-style: var(--bs-border-style);
+                border-width: var(--bs-border-width);
+                border-radius: var(--bs-border-radius);
+                border-top: 0;
+                border-left: 0;
+                border-right: 0;
+                padding: 0.15rem;
+                text-align: center;
+                display: flex;
+                justify-content: center;
+            }
+
+            .popup-iframe-container {
+                position: relative;
+                overflow: hidden;
+                width: 100%;
+                padding-top: 56.25%;
+            }
+
+            .popup-iframe {
+                position: absolute;
+                top: 0;
+                left: 0;
+                bottom: 0;
+                right: 0;
+                width: 100%;
+                height: 100%;
+            }
+
+            #qPopupBodyText {
+                margin-bottom: 1rem;
+            }
+        </style>
+    </head>
+    <body>
+        <div id="qPopup" class="modal fade show" tabindex="-1" role="dialog">
+            <div class="modal-dialog modal-dialog-centered" role="document">
+                <div class="modal-content">
+                    <div id="qPopupHead" class="modal-header">
+                        <em id="qPopupHeadEm"></em>
+                        <div id="qPopupHeadNEm"></div>
+                    </div>
+                    <div id="qPopupBody" class="modal-body">
+
+                    </div>
+                    <div id="qPopupFoot" class="modal-footer">
+                        <div id="qPopupPlayers"></div>
+                        <!--<button type="button" class="btn btn-outline-secondary btn-close-q-popup btn-sm">Close</button>-->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="homeContent">
+            <div id="pageContent">
+                <div id="file-manager">
+                    <div id="game-saves"></div>
+                    <div id="dropbox" class="full-filedrop">
+                        <a href="#" onclick="window.clickItem('dropbox-input');">
+                            <h4>
+                                Drop a CSV file here to populate the Jeopardy board.
+                            </h4>
+                        </a>
+                        <input type="file" id="dropbox-input" style="display: none" />
+                    </div>
+                </div>
+                <div id="gameboard" class="gameboard d-none"></div>
+                <div id="bottom-bar">
+                    <hr />
+                    <div>
+                        <div>
+                            <a id="example-csv-link" download="jeopardyExample.csv">Download sample CSV</a>
+                            <button class="btn btn-outline-secondary btn-sm d-none" id="close-game-btn" disabled>Close Game</button>
+                            <button class="btn btn-outline-secondary btn-sm d-none" id="reset-game-btn" disabled>Reset Game</button>
+                            <button class="btn btn-outline-primary btn-sm d-none" id="undo-reset-btn" disabled>Undo Reset</button>
+                            <button class="btn btn-outline-danger btn-sm d-none" id="confirm-reset-btn" disabled>Confirm Reset</button>
+                        </div>
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="darkModeCheck">
+                            <label class="form-check-label" for="darkModeCheck">Dark Mode</label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.5/dist/js/bootstrap.bundle.min.js" integrity="sha384-k6d4wzSIapyDyv1kpU366/PK5hCdSbCRGRCMv+eplOQJWyd1fbcAu9OCUj5zNLiq" crossorigin="anonymous"></script>
+        <script type="module">
+            class GameObject {
+                isGO = true;
+                id = -1;
+                _gameId = -1;
+                killed = false;
+
+                constructor() {}
+
+                get game() { return window.games[this._gameId]; }
+                set game(game) {
+                    if (game) {
+                        this.id = this.getCollection(game)?.push(this) - 1;
+                    } else {
+                        const collection = this.getCollection(game);
+                        if (collection != null)
+                            collection[this.id] = null;
+
+                        this.id = -1;
+                    }
+
+                    this._gameId = game?.id ?? -1;
+                }
+
+                getCollection(game) { return null; }
+                render() { }
+                onRenderComplete() { }
+                kill() { this.killed = true; }
+            }
+
+            class Category extends GameObject {
+                isCategory = true;
+
+                _questions = [];
+                name;
+
+                get questions() { return this._questions; }
+
+                constructor(name) {
+                    super();
+                    this.name = name;
+                }
+
+                _add(question) {
+                    if (question.id === -1)
+                        return -1;
+
+                    const idx0 = this.questions.findIndex(q => q.id === question.id);
+
+                    if (idx0 > 0)
+                        return idx0;
+
+                    const idx = this.questions.findIndex(q => q.value > question.value);
+
+                    if (idx >= 0) {
+                        this.questions.splice(idx, 0, question);
+                        return idx;
+                    } else {
+                        return this.questions.push(question) - 1;
+                    }
+                }
+                
+                add(... questions) {
+                    for (const question of questions)
+                        question.category = this;
+                }
+
+                remove(question) {
+                    const idx = this.questions.findIndex(q => q.id == question.id);
+
+                    if (idx >= 0)
+                        this.questions.splice(idx, 1);
+                }
+
+                getCollection(game) { return game.categories; }
+
+                render() {
+                    if (this.killed)
+                        return "";
+                    return `
+                        <div class="category">
+                            <div id="${this._gameId}.${this.id}.catHead" class="categoryHead"></div>
+                            <div class="categoryBody">${this.questions.map(q => q.render()).join("")}</div>
+                        </div>`;
+                }
+
+                onRenderComplete() {
+                    const head = document.getElementById(`${this._gameId}.${this.id}.catHead`);
+                    if (head) head.textContent = this.name;
+                }
+
+                toCookie() {
+                    const categoryObject = Object.assign(new Object(), this);
+                    categoryObject._questions = this.questions.map(q => q.id).join(',');
+                    writeJsonCookie(`g${this._gameId}.c${this.id}`, categoryObject);
+                }
+
+                static fromCookie(gameId, id, gameQuestions) {
+                    const c = getCookieJson(`g${gameId}.c${id}`);
+                    if (c) {
+                        c._questions = c._questions.split(',').map(qId => gameQuestions[qId]);
+                        return Object.assign(new Category(), c);
+                    }
+                    return null;
+                }
+            }
+
+            class QuestionBase extends GameObject {
+                isQuestion = true;
+                _catId = -1;
+                value;
+
+                get game() { return super.game; }
+                set game(game) {
+                    this.category = null;
+                    super.game = game;
+                }
+
+                get category() { return this.game?.categories[this._catId]; }
+                set category(category) {
+                    this.game?.categories[this._catId]?.remove(this);
+                    this._catId = category?.id ?? -1;
+                    category?._add(this);
+                }
+
+                constructor(value) {
+                    super();
+                    this.value = value;
+                }
+
+                getCollection(game) { return game.questions; }
+
+                render() {
+                    if (this.killed)
+                        return "";
+                    return `
+                    <div class="question">
+                        <button id="${this._gameId}.${this.id}.qBtn" class="btn btn-question btn-dumb-question" onclick="">
+                            000
+                        </button> 
+                    </div>
+                    `
+                }
+
+                toCookie() { writeJsonCookie(`g${this._gameId}.q${this.id}`, this); }
+
+                static fromCookie(gameId, id) {
+                    const q = getCookieJson(`g${gameId}.q${id}`);
+                    if (q) {
+                        if (q.isFullQuestion)
+                            return Object.assign(new Question(), q);
+                        else
+                            return Object.assign(new QuestionBase(), q);
+                    }
+                    return null;
+                }
+            }
+
+            class Question extends QuestionBase {
+                isFullQuestion = true;
+                question;
+                answer;
+                
+                constructor(value, question, answer) {
+                    super(value);
+                    this.question = question;
+                    this.answer = answer;
+                }
+
+                render() {
+                    return this.killed ? "" : `
+                    <div class="question">
+                        <button id="${this._gameId}.${this.id}.qBtn" class="btn btn-question btn-primary${this.game?.isQuestionAnswered(this.id) ? " answered" : ""}" onclick="window.clickQuestion(${this._gameId}, ${this.id})">
+                        </button> 
+                    </div>`
+                }
+
+                onRenderComplete() {
+                    const qBtn = document.getElementById(`${this._gameId}.${this.id}.qBtn`);
+                    if (qBtn) qBtn.textContent = this.value;
+                }
+            }
+
+            class Player extends GameObject {
+                isPlayer = true;
+
+                name = "";
+
+                next = null;
+                prev = null;
+                _score = 0;
+                qs = [];
+
+                constructor(name) {
+                    super();
+                    this.name = name;
+                }
+
+                set score(score) {
+                    this._score = score;
+
+                    const scoreplate = document.getElementById(`g${this._gameId}.p${this.id}-score`);
+                    if (scoreplate)
+                        scoreplate.textContent = this._score;
+                }
+
+                get score() {
+                    return this._score;
+                }
+
+                render() {
+                    return this.killed ? "" : `
+                        <div id="g${this._gameId}.p${this.id}" class="player">
+                            <div class="p-input-group input-group input-group-sm">
+                                <input id="g${this._gameId}.p${this.id}-name" type="text" class="p-input form-control" size="8">
+                            </div>
+                            <div class="p-btm-group">
+                                <div id="g${this._gameId}.p${this.id}-score" class="p-score"></div>
+                                <button id="g${this._gameId}.p${this.id}-delete" class="btn btn-outline-danger btn-sm">X</button>
+                            </div>
+                        </div>
+                    `;
+                }
+
+                renderQToggle() {
+                    return this.killed ? "" : `
+                        <div id="g${this._gameId}.p${this.id}-qpop" class="playerQPop">
+                            <div id="g${this._gameId}.p${this.id}-qpop-name" class="p-qpop-name input-group input-group-sm"></div>
+                            <div class="p-qpop-btm-group btn-group btn-group-toggle">
+                                <input id="g${this._gameId}.p${this.id}-q-s" name="g${this._gameId}.p${this.id}-q-state" class="btn-check" type="radio" checked="">
+                                <label for="g${this._gameId}.p${this.id}-q-s" class="btn btn-sm btn-outline-success">✓</label>
+
+                                <input id="g${this._gameId}.p${this.id}-q-n" name="g${this._gameId}.p${this.id}-q-state" class="btn-check" type="radio" checked="checked">
+                                <label for="g${this._gameId}.p${this.id}-q-n" class="btn btn-sm btn-outline-secondary">–</label>
+
+                                <input id="g${this._gameId}.p${this.id}-q-f" name="g${this._gameId}.p${this.id}-q-state" class="btn-check" type="radio">
+                                <label for="g${this._gameId}.p${this.id}-q-f" class="btn btn-sm btn-outline-danger">✗</label>
+                            </div>
+                        </div>
+                    `;
+                }
+
+                onRenderComplete() {
+                    const nameplate = document.getElementById(`g${this._gameId}.p${this.id}-name`);
+                    const scoreplate = document.getElementById(`g${this._gameId}.p${this.id}-score`);
+                    const killbtn = document.getElementById(`g${this._gameId}.p${this.id}-delete`);
+
+                    if (scoreplate)
+                        scoreplate.textContent = this._score;
+
+                    if (nameplate) {
+                        nameplate.value = this.name;
+                        nameplate.addEventListener("input", ((ev) => {
+                            if (!ev.isComposing) {
+                                this.name = ev.target.value;
+                                this.toCookie();
+                            }
+                        }).bind(this));
+                    }
+
+                    if (killbtn)
+                        killbtn.onclick = ((ev) => this.game?.deletePlayer(this.id)).bind(this);
+                }
+
+                onRenderQToggleComplete(qId) {
+                    if (this.killed)
+                        return;
+
+                    const nameplate = document.getElementById(`g${this._gameId}.p${this.id}-qpop-name`);
+                    if (nameplate)
+                        nameplate.textContent = this.name;
+
+                    const sElem = document.getElementById(`g${this._gameId}.p${this.id}-q-s`);
+                    const nElem = document.getElementById(`g${this._gameId}.p${this.id}-q-n`);
+                    const fElem = document.getElementById(`g${this._gameId}.p${this.id}-q-f`);
+
+                    if (sElem && nElem && fElem) {
+                        sElem.onclick = (() => this.setQ(qId, 1)).bind(this);
+                        nElem.onclick = (() => this.setQ(qId, 0)).bind(this);
+                        fElem.onclick = (() => this.setQ(qId, -1)).bind(this);
+
+                        const val = this.getQ(qId);
+                        if (val > 0)
+                            sElem.checked = "checked";
+                        else if (val < 0)
+                            fElem.checked = "checked";
+                        else
+                            nElem.checked = "checked";
+                    }
+                }
+
+                updateScore() {
+                    let score = 0;
+                    const game = this.game;
+                    for (let i = 0; i < this.qs.length; ++i)
+                        score += this.getQ(i) * (game?.questions[i].value ?? 0);
+                    this.score = score;
+                }
+
+                setQ(qId, state) {
+                    while (this.qs.length <= qId)
+                        this.qs.push(0);
+                    this.qs[qId] = state;
+                    this.game?.renderQuestionAnswer(qId);
+                    this.updateScore();
+                    this.toCookie();
+                }
+
+                getQ(qId) { return (this.qs.length > qId) ? this.qs[qId] : 0; }
+
+                getCollection(game) { return game.players; }
+
+                _toCookie() {
+                    const pObj = Object.assign(new Object(), this);
+                    pObj.qs = this.qs.map(q => (q === 1) ? 's' : ((q === -1) ? 'f' : 'n')).join('');
+                    writeJsonCookie(`g${this._gameId}.p${this.id}`, pObj);
+                }
+
+                toCookie(allPlayers = true) {
+                    if (!allPlayers) {
+                        this._toCookie();
+                    } else {
+                        const game = this.game;
+                        if (game) {
+                            for (const player of game.players)
+                                player._toCookie();
+                        } else {
+                            this._toCookie();
+                        }
+                        
+                        disableUndoBtn();
+                    }
+                }
+
+                static qsFromStr(qs) { return qs.split('').map(q => (q === 's') ? 1 : ((q === 'f') ? -1 : 0)); }
+
+                static fromCookie(gameId, id) {
+                    const p = getCookieJson(`g${gameId}.p${id}`);
+                    if (p) {
+                        p.qs = Player.qsFromStr(p.qs);
+                        return Object.assign(new Player(), p);
+                    }
+                    return null;
+                }
+            }
+
+            class Game {
+                isGame = true;
+                id = -1;
+                active = false;
+                name;
+                questions = [];
+                categories = [];
+                players = [];
+                created = new Date().toLocaleString();
+
+                constructor(name, ... items) {
+                    this.name = name;
+                    this.add(... items);
+                }
+
+                add(... items) {
+                    for (const item of items.filter(i => i.isGO))
+                        item.game = this;
+                }
+
+                remove(... items) {
+                    for (let item of items.filter(i => i.isGO && (i._gameId === this.id)))
+                        item.game = null;
+                }
+
+                open() {
+                    for (const game of window.games) {
+                        if (game?.active && (game.id !== this.id))
+                            game.close();
+                    }
+
+                    const gameboard = toggleGameboard(true);
+                    gameboard.innerHTML = `
+                        <div class="game">
+                            <div class="ghead-input-group input-group input-group-lg">
+                                <input id="${this.id}.gHead" type="text" class="ghead-input form-control" aria-label="Large">
+                            </div>
+                            <div class="gamePlayersContainer">
+                                <div id="g${this.id}-ps" class="gamePlayers">
+                                    ${this.players.map(p => p.render()).join("")}
+                                </div>
+                                <div class="addPlayerContainer">
+                                    <button id="g${this.id}-addp" class="btn btn-outline-secondary btn-sm">${this.players.some(p => !p.killed) ? "+" : "+ Player"}</button>
+                                </div>
+                            </div>
+                            <div class="gameCategories">
+                                ${this.categories.map(c => c.render()).join("")}
+                            </div>
+                        </div>`;
+
+                    const header = document.getElementById(`${this.id}.gHead`);
+                    header.value = this.name;
+                    header.addEventListener("input", ((ev) => {
+                        if (!ev.isComposing) {
+                            this.name = ev.target.value;
+                            this.toCookie(false);
+                        }
+                    }).bind(this));
+
+                    document.getElementById(`g${this.id}-addp`).onclick = ((ev) => {
+                        ev.target.textContent = "+";
+                        this.add(new Player(`Player ${this.players.filter(p => !p.killed).length + 1}`));
+                        document.getElementById(`g${this.id}-ps`).innerHTML = this.players.map(c => c.render()).join("");
+                        for (let player of this.players)
+                            player.onRenderComplete();
+                        for (let i = 0; i < this.questions.length; ++i)
+                            this.renderQuestionAnswer(i);
+                        this.toCookie();
+                    }).bind(this);
+
+                    for (let category of this.categories)
+                        category.onRenderComplete();
+
+                    for (let question of this.questions)
+                        question.onRenderComplete();
+
+                    for (let player of this.players)
+                        player.onRenderComplete();
+                    
+                    this.active = true;
+                    this.toCookie(false);
+                }
+
+                close() {
+                    if (this.active) {
+                        const gameboard = toggleGameboard(false);
+                        gameboard.innerHTML = "";
+
+                        this.active = false;
+                        this.toCookie();
+                    }
+                }
+
+                isQuestionAnswered(qId) {
+                    const alive = this.players.filter(p => !p.killed);
+                    if (!alive.length)
+                        return false;
+                    return alive.some((p) => p.qs[qId] > 0) || alive.reduce((agg, p) => agg && (p.qs[qId] < 0), true);
+                }
+
+                renderQuestionAnswer(qId) {
+                    const qElem = document.getElementById(`${this.id}.${qId}.qBtn`);
+                    if (qElem) {
+                        if (this.isQuestionAnswered(qId))
+                            qElem.classList.add("answered");
+                        else
+                            qElem.classList.remove("answered");
+                    }
+                }
+
+                reset() {
+                    for (const player of this.players) {
+                        player.qs = [];
+                        player.updateScore();
+                    }
+                    
+                    for (let i = 0; i < this.questions.length; ++i)
+                        this.renderQuestionAnswer(i);
+                }
+
+                undoReset() {
+                    for (const player of this.players) {
+                        player.qs = Player.qsFromStr(getCookieJson(`g${this.id}.p${player.id}`)?.qs);
+                        player.updateScore();
+                    }
+
+                    for (let i = 0; i < this.questions.length; ++i)
+                        this.renderQuestionAnswer(i);
+                }
+
+                delete() {
+                    this.close();
+                    deleteGameCookie(this.id);
+                    window.games[this.id] = null;
+                }
+
+                deletePlayer(pId) {
+                    this.players[pId]?.kill();
+                    if (!this.players.some(p => !p.killed)) {
+                        const addBtn = document.getElementById(`g${this.id}-addp`);
+                        if (addBtn) addBtn.textContent = "+ Player";
+                        for (let i = 0; i < this.questions.length; ++i)
+                            this.renderQuestionAnswer(i);
+                    }
+                    document.getElementById(`g${this.id}-ps`).innerHTML = this.players.map(c => c.render()).join("");
+                    for (let player of this.players)
+                        player.onRenderComplete();
+                    this.toCookie();
+                }
+
+                renderRow() {
+                    return `
+                        <div id="g${this.id}.saveRow" class="game-save btn btn-outline-primary">
+                            <div class="game-save-details">
+                                <div>${this.id}</div>
+                                <div class="vr"></div>
+                                <div id="g${this.id}.saveRow.name"></div>
+                                <div class="vr"></div>
+                                <div>${this.players.reduce((agg, p) => p.killed ? agg : agg + 1, 0)} Players</div>
+                                <div class="vr"></div>
+                                <div>${this.created}</div>
+                            </div>
+                            <button id="g${this.id}.deleteBtn" class="btn btn-outline-danger btn-delete-game">X</button>
+                        </div>`;
+                }
+
+                renderQPopUpPlayers() {
+                    return this.players.map(p => p.renderQToggle()).join("");
+                }
+
+                onRenderQPopUpPlayersComplete(qId) {
+                    for (const player of this.players) player.onRenderQToggleComplete(qId);
+                }
+
+                toCookie(children = true) {
+
+                    if (children) {
+                        for (const question of this.questions) question.toCookie();
+                        for (const category of this.categories) category.toCookie();
+                        for (const player of this.players) player.toCookie(false);
+                    }
+
+                    const gameObject = Object.assign(new Object(), this);
+                    gameObject.questions = undefined;
+                    gameObject.categories = undefined;
+                    gameObject.players = undefined;
+
+                    writeJsonCookie(`g${this.id}`, gameObject);
+                    disableUndoBtn();
+                }
+
+                static fromCookie(gameId) {
+                    const jsonGame = getCookieJson(`g${gameId}`);
+
+                    if (!jsonGame)
+                        return null;
+                    
+                    const game = Object.assign(new Game(), jsonGame);
+
+                    for (let i = 0; true; ++i) {
+                        const q = Question.fromCookie(gameId, i);
+                        if (q) game.questions.push(q);
+                        else break;
+                    }
+
+                    for (let i = 0; true; ++i) {
+                        const c = Category.fromCookie(gameId, i, game.questions);
+                        if (c) game.categories.push(c);
+                        else break;
+                    }
+
+                    for (let i = 0; true; ++i) {
+                        const p = Player.fromCookie(gameId, i);
+                        if (p) game.players.push(p);
+                        else break;
+                    }
+
+                    window.games[game.id] = game;
+                    return game;
+                }
+            }
+
+            window.games = new Array(100).fill(null);
+
+            const qPopupModal = new bootstrap.Modal(document.getElementById('qPopup'));
+
+            /*
+            const c1 = new Category("apples");
+            const c2 = new Category("pears");
+
+            const q0 = new Question(500, "these things fall from trees", "what are apples");
+            const q1 = new Question(100, "these things can be made in to sauce", "uhhh alex what are apples");
+            const q2 = new Question(300, "these things can be boiled mashed and stuck in stews", "who are apples, alex");
+            const q3 = new Question(500, "aaaaaaaaaa", "what are apples!");
+
+            const game = new Game(c1, c2, q0, q1, q2, q3);
+
+            c1.add(q0, q1, q2);
+            c2.add(q3);
+            */
+
+            function renderQuestion(content) {
+
+                const elements = [];
+                // From https://stackoverflow.com/a/8260383
+                function youtube_parser(url){
+                    var regExp = /^.*((youtu.be\/)|(v\/)|(\/u\/\w\/)|(embed\/)|(watch\?))\??v?=?([^#&?]*).*/;
+                    var match = url.match(regExp);
+                    return (match&&match[7].length==11)? match[7] : false;
+                }
+
+                // Modified from https://stackoverflow.com/a/8943487
+                function linkify(text) {
+                    var urlRegex =/(\b(https?|ftp|file):\/\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|])/ig;
+                    return text.replace(urlRegex, function(url) {
+                        let youtubeId = false;
+                        const imgRegex = /\.(jpg|jpeg|png|gif|bmp|tif|tiff)/;
+
+                        if (url.match(imgRegex)) {
+                            elements.push(`<img style="width: 100%; height: auto" src="${url}"/>`);
+                        } else if (youtubeId = youtube_parser(url)) {
+                            // HTML from the youtube embed helper. I'm not changing the formatting idc.
+                            elements.push(`<div class="popup-iframe-container">
+                                <iframe class="popup-iframe" src="https://www.youtube.com/embed/${youtubeId}" title="YouTube video player" frameborder="0" allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+                                </div>`);
+                        } else {
+                            return `<a href="${url}">${url}</a>`; 
+                        }
+                        return "";
+                    });
+                }
+
+                const text = linkify(content);
+
+                return {
+                    content: `<div id="qPopupBodyText"></div>${elements.join("")}`,
+                    text: text
+                }
+            }
+
+            window.clickQuestion = (gameId, id) => {
+                const game = window.games[gameId];
+                const question = game.questions[id];
+
+                document.getElementById("qPopupHeadEm").textContent = question.category.name;
+                document.getElementById("qPopupHeadNEm").textContent = `for ${question.value}`;
+
+                const renderResult = renderQuestion(question.question);
+                document.getElementById("qPopupBody").innerHTML = renderResult.content;
+                document.getElementById("qPopupBodyText").innerHTML = renderResult.text;
+
+                if (question.category.name.length > 45)
+                    document.getElementById("qPopupHead").classList.add("big-name");
+                else
+                    document.getElementById("qPopupHead").classList.remove("big-name");
+
+                document.getElementById("qPopupPlayers").innerHTML = game.renderQPopUpPlayers();
+                game.onRenderQPopUpPlayersComplete(id);
+
+                openQPopup();
+            }
+
+            function openQPopup() {
+                qPopupModal.show();
+            }
+
+            function closeQPopup() {
+                qPopupModal.hide();
+            }
+
+            function fileboxDrag(e) {
+                e.stopPropagation();
+                e.preventDefault();
+            }
+
+            function drop(e) {
+                e.stopPropagation();
+                e.preventDefault();
+
+                const dt = e.dataTransfer;
+                const files = dt.files;
+
+                handleFiles(files);
+            }
+            
+            function getCookie(name) { return document.cookie.split('; ').find(row => row.startsWith(`${name}=`))?.split('=').slice(1).join('='); }
+            function getCookieJson(name) {
+                const str = getCookie(name);
+                if (str)
+                    return JSON.parse(str);
+            }
+            function writeCookie(name, item) { document.cookie = `${name}=${item}; path=/; max-age=${60*60*24*7}; SameSite=Strict`; }
+            function writeJsonCookie(name, item) { document.cookie = `${name}=${JSON.stringify(item)}; path=/; max-age=${60*60*24*7}; SameSite=Strict`; }
+            function tryEraseCookie(name) {
+                if (getCookie(name) == null) 
+                    return false;
+                document.cookie = `${name}=; path=/; max-age=-99999999; SameSite=Strict`;
+                return true;
+            }
+
+            function deleteGameCookie(gameId) {
+                for (let i = 0; tryEraseCookie(`g${gameId}.q${i}`); ++i) { }
+                for (let i = 0; tryEraseCookie(`g${gameId}.c${i}`); ++i) { }
+                for (let i = 0; tryEraseCookie(`g${gameId}.p${i}`); ++i) { }
+                tryEraseCookie(`g${gameId}`);
+            }
+
+            function saveGame(gameId) {
+                deleteGameCookie(gameId);
+                window.games[gameId].toCookie();
+            }
+
+            function tryLoadGame(gameId) {
+                return Game.fromCookie(gameId);
+            }
+
+            window.clickItem = (elemId) => {
+                var elem = document.getElementById(elemId);
+                if(elem && document.createEvent) {
+                    var evt = document.createEvent("MouseEvents");
+                    evt.initEvent("click", true, false);
+                    elem.dispatchEvent(evt);
+                }
+            }
+
+            function handleFiles(files) {
+                const file = files[0];
+
+                if (!file || !file.name.endsWith('.csv')) {
+                    console.error("Invalid file.");
+                    return;
+                }
+
+                const reader = new FileReader();
+
+                function isStringOpen(str) {
+                    if (!str.startsWith('"'))
+                        return 0;
+
+                    let dblQuoteCount = 0;
+                    for (let i = 0; i < str.length; ++i) {
+                        if (str[i] === '"')
+                            ++dblQuoteCount;
+                    }
+
+                    return dblQuoteCount % 2;
+                }
+
+                reader.onload = () => {
+                    const data = reader.result.replace("\r\n", "\n").split('\n').map(row => row.split(',')).map(row => row.reduce((acc, split) => {
+                        const prev = acc[acc.length - 1] ?? "";
+                        
+                        if (isStringOpen(prev))
+                            acc[acc.length - 1] = prev + "," + split;
+                        else
+                            acc.push(split);
+
+                        return acc;
+                    }, []).map(str => {
+                        let resStr = str;
+                        if (str.startsWith('"') && str.endsWith('"'))
+                            resStr = resStr.substring(1, resStr.length - 1);
+
+                        resStr = resStr.replaceAll('""', '"');
+
+                        return resStr;
+                    }));
+
+                    const game = new Game(data[0][0] ? data[0][0] : "Off-brand Jeopardy! Legally Distinct!");
+
+                    game.id = window.games.findIndex(g => g == null);
+                    if (game.id >= 0)
+                        window.games[game.id] = game;
+
+                    if (game.id < 0)
+                        throw new Error("Only 100 saves are allowed at this time.");
+
+                    game.add(... data[0].slice(1).map(name => new Category(name)));
+                    
+                    const qData = data.slice(1).filter(row => row[0]);
+
+                    for (let cIdx = 0; cIdx < game.categories.length; ++cIdx) {
+                        const questions = qData.map(row => row[cIdx + 1] ? new Question(Number(row[0]), row[cIdx + 1], "") : new QuestionBase(Number(row[0])));
+                        game.add(... questions);
+                        game.categories[cIdx].add(... questions);
+                    }
+
+                    game.open();
+                    saveGame(game.id);
+                    renderGameSaves();
+                };
+
+                reader.readAsText(file);
+            }
+
+            function setDarkMode(darkMode) {
+                document.body.setAttribute("data-bs-theme", darkMode ? "dark" : "light");
+            }
+
+            function toggleGameboard(doGameboard) {
+                if (doGameboard == null)
+                    doGameboard = gameboard.classList.contains("d-none");
+
+                if (doGameboard) {
+                    fileMgr.classList.add("d-none");
+                    gameboard.classList.remove("d-none");
+                    closeBtn.removeAttribute("disabled");
+                    closeBtn.classList.remove("d-none");
+                    resetBtn.removeAttribute("disabled");
+                    resetBtn.classList.remove("d-none");
+                    csvExample.setAttribute("disabled", "disabled");
+                    csvExample.classList.add("d-none");
+                } else {
+                    fileMgr.classList.remove("d-none");
+                    gameboard.classList.add("d-none");
+                    closeBtn.setAttribute("disabled", "disabled");
+                    closeBtn.classList.add("d-none");
+                    resetBtn.setAttribute("disabled", "disabled");
+                    resetBtn.classList.add("d-none");
+                    csvExample.removeAttribute("disabled");
+                    csvExample.classList.remove("d-none");
+
+                    disableUndoBtn(false);
+                    renderGameSaves();
+                }
+
+                return gameboard;
+            }
+
+            function renderGameSaves() {
+                document.getElementById("game-saves").innerHTML = window.games.map(g => g?.renderRow() ?? "").join('');
+
+                for (const game of window.games) {
+                    if (game) {
+                        const nameplate = document.getElementById(`g${game.id}.saveRow.name`);
+                        if (nameplate) nameplate.textContent = game.name;
+                    }
+                }
+
+                for (const item of document.getElementsByClassName('btn-delete-game')) {
+                    const id = Number(item.id.split('.')[0].substring(1));
+                    item.addEventListener('click', () => {
+                        window.games[id]?.delete();
+                        renderGameSaves();
+                    });
+                }
+
+                for (const item of document.getElementsByClassName('game-save')) {
+                    const id = Number(item.id.split('.')[0].substring(1));
+                    item.addEventListener('click', (ev) => {
+                        window.games[id]?.open();
+                    });
+                }
+            }
+
+            const csvExample = document.getElementById("example-csv-link");
+            const gameboard = document.getElementById("gameboard");
+            const fileMgr = document.getElementById("file-manager");
+            const closeBtn = document.getElementById("close-game-btn");
+            const undoResetBtn = document.getElementById("undo-reset-btn");
+            const resetBtn = document.getElementById("reset-game-btn");
+            const confirmResetBtn = document.getElementById("confirm-reset-btn");
+
+            function disableUndoBtn(enableReset = true) {
+                undoResetBtn.setAttribute("disabled", "disabled");
+                undoResetBtn.classList.add("d-none");
+                confirmResetBtn.setAttribute("disabled", "disabled");
+                confirmResetBtn.classList.add("d-none");
+
+                if (enableReset && !gameboard.classList.contains("d-none")) {
+                    resetBtn.removeAttribute("disabled");
+                    resetBtn.classList.remove("d-none");
+                }
+            }
+
+            for (const item of document.getElementsByClassName('btn-close-q-popup'))
+                item.addEventListener('click', closeQPopup);
+
+            document.getElementById("close-game-btn").addEventListener("click", () => {
+                window.games.find(g => g?.active)?.close();
+            })
+
+            resetBtn.addEventListener("click", () => {
+                window.games.find(g => g?.active)?.reset();
+
+                undoResetBtn.removeAttribute("disabled");
+                undoResetBtn.classList.remove("d-none");
+                confirmResetBtn.removeAttribute("disabled");
+                confirmResetBtn.classList.remove("d-none");
+
+                resetBtn.setAttribute("disabled", "disabled");
+                resetBtn.classList.add("d-none");
+            })
+
+            undoResetBtn.addEventListener("click", () => {
+                window.games.find(g => g?.active)?.undoReset();
+                disableUndoBtn();
+            });
+
+            confirmResetBtn.addEventListener("click", () => {
+                window.games.find(g => g?.active)?.toCookie();
+                disableUndoBtn();
+            });
+
+            const dropbox = document.getElementById("dropbox");
+            dropbox.addEventListener("dragenter", fileboxDrag, false);
+            dropbox.addEventListener("dragover", fileboxDrag, false);
+            dropbox.addEventListener("drop", drop, false);
+
+            const dropboxIn = document.getElementById("dropbox-input");
+            dropboxIn.addEventListener("change", () => handleFiles(dropboxIn.files));
+
+            const darkModeToggle = document.getElementById("darkModeCheck");
+            const cookieDarkModeStr = getCookie("darkMode");
+
+            darkModeToggle.addEventListener("change", (ev) => {
+                setDarkMode(ev.target.checked);
+                writeCookie("darkMode", ev.target.checked);
+            });
+
+            const darkMode = cookieDarkModeStr?.startsWith('t') ?? Boolean(window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
+            darkModeToggle.checked = darkMode;
+            setDarkMode(darkMode);
+
+            window.matchMedia?.('(prefers-color-scheme: dark)').addEventListener('change', event => {
+                tryEraseCookie("darkMode");
+                darkModeToggle.checked = Boolean(event.matches);
+                setDarkMode(event.matches);
+            });
+
+            for(let i = 0; i < 100; ++i) {
+                const gamei = tryLoadGame(i);
+
+                if (gamei) {
+                    if (gamei.active)
+                        gamei.open();
+                }
+            }
+
+            const blobUrl = URL.createObjectURL(new Blob([`GameTitle,Apples,Pears,Grapes,OtherCategory,AnotherCategory,\r\n100,Add question descriptions here,Question $C$2,Question $D$2,Question $E$2,Question $F$2,\r\n200,Question $B$3,Question $C$3,Question $D$3,,Question $F$3,\r\n300,Question $B$4,Question $C$4,,Question $E$4,Question $F$4,\r\n400,Question $B$5,"Gif links https://media1.tenor.com/m/6CLuMVze_qwAAAAd/lego-star-wars-qui-gon-jinn.gif",Question $D$5,,Question $F$5,\r\n500,"You can embed youtube links https://www.youtube.com/watch?v=jNQXAC9IVRw","And image links https://images.pexels.com/photos/30800337/pexels-photo-30800337/free-photo-of-playful-border-collie-enjoying-snowy-winter-day.jpeg",Question $D$6,Question $E$6,Question $F$6`], {
+                type: "text/csv"
+            }));
+
+            csvExample.setAttribute("href", blobUrl);
+
+
+            renderGameSaves();
+        </script>
+    </body>
+</html>
