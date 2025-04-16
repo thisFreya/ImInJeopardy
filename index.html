@@ -63,14 +63,14 @@
                 display: none;  /* Safari and Chrome */
             }
 
-            @media only screen and (width <= 1380px) {
+            @media only screen and (max-width: 1380px) {
                 #pageContent {
                     max-width: 80%;
                     transition: max-width 0.25s ease-in-out;
                 }
             }
 
-            @media only screen and (width <= 980px) {
+            @media only screen and ((max-width: 980px) or (max-aspect-ratio: 0.8)) {
                 #pageContent {
                     max-width: 100%;
                 }
