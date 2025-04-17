@@ -83,11 +83,11 @@
             .full-filedrop {
                 display: flex;
                 flex-grow: 1;
-                margin: 5rem;
+                margin-top: 0.5rem;
+                margin-bottom: 1rem;
                 border-color: var(--bs-border-color);
-                border-radius: 0.5rem;
+                border-radius: 0.25rem;
                 border-style: var(--bs-border-style);
-                background-color: var(--bs-tertiary-bg);
                 align-content: center;
                 min-height: max(20%, 10rem);
             }
@@ -821,13 +821,13 @@
                         item.game = null;
                 }
 
-                open() {
+                async open(qId) {
                     for (const game of window.games) {
                         if (game?.active && (game.id !== this.id))
                             game.close();
                     }
 
-                    const gameboard = toggleGameboard(true);
+                    const gameboard = await toggleGameboard(true);
                     gameboard.innerHTML = `
                         <div class="game">
                             <div class="ghead-input-group input-group input-group-lg">
@@ -877,11 +877,16 @@
                     
                     this.active = true;
                     this.toCookie(false);
+
+                    if (qId != null)
+                        await openQuestion(this.id, qId);
+                    else
+                        await closeQPopup();
                 }
 
-                close() {
+                async close() {
                     if (this.active) {
-                        const gameboard = toggleGameboard(false);
+                        const gameboard = await toggleGameboard(false);
                         gameboard.innerHTML = "";
 
                         this.active = false;
@@ -1020,7 +1025,34 @@
 
             window.games = new Array(100).fill(null);
 
-            const qPopupModal = new bootstrap.Modal(document.getElementById('qPopup'));
+            const qPopupModalElem = document.getElementById('qPopup');
+            const qPopupModal = new bootstrap.Modal(qPopupModalElem, { backdrop: 'static', keyboard: false });
+
+            qPopupModalElem.addEventListener('hidePrevented.bs.modal', closeQPopup);
+
+            qPopupModalElem.addEventListener('hidden.bs.modal', (ev) => {
+                if (window.targetQPopState === true)
+                    qPopupModal.show();
+                else if (window.targetQPopState === false)
+                    window.targetQPopState = null;
+            });
+
+            qPopupModalElem.addEventListener('shown.bs.modal', () => {
+                if (window.targetQPopState === false)
+                    qPopupModal.hide();
+                else if (window.targetQPopState === true)
+                    window.targetQPopState = null;
+            });
+
+            window.addEventListener("popstate", async (ev) => {
+                const url = new URL(window.location);
+                if (url.searchParams.get('g') != null) {
+                    await window.games[url.searchParams.get('g')]?.open(url.searchParams.get('q'));
+                } else {
+                    window.games.find(g => g?.active)?.close();
+                    await closeQPopup();
+                }
+            });
 
             function renderQuestion(content) {
 
@@ -1061,9 +1093,14 @@
                 }
             }
 
-            window.clickQuestion = (gameId, id) => {
+            async function openQuestion(gameId, id) {
                 const game = window.games[gameId];
                 const question = game.questions[id];
+
+                if ((question == null) || question.killed) {
+                    await closeQPopup();
+                    return false;
+                }
 
                 document.getElementById("qPopupHeadEm").textContent = question.category.name;
                 document.getElementById("qPopupHeadNEm").textContent = `for ${question.value}`;
@@ -1080,15 +1117,72 @@
                 document.getElementById("qPopupPlayers").innerHTML = game.renderQPopUpPlayers();
                 game.onRenderQPopUpPlayersComplete(id);
 
-                openQPopup();
+                await openQPopup();
             }
 
-            function openQPopup() {
-                qPopupModal.show();
+            async function openGame(id, qId, replace = false) {
+                const game = window.games[id];
+
+                const url = new URL(window.location);
+
+                if (game) {
+                    await game.open(qId);
+                    if (qId != null)
+                        url.searchParams.set('q', qId);
+                    else
+                        url.searchParams.delete('q');
+                    url.searchParams.set('g', id);
+
+                    if (replace)
+                        history.replaceState({ g: id, q: qId }, "", url);
+                    else
+                        history.pushState({ g: id, q: qId }, "", url);
+                } else {
+                    url.searchParams.delete('q');
+                    url.searchParams.delete('g');
+
+                    if (replace)
+                        history.replaceState({ }, "", url);
+                    else
+                        history.pushState({ }, "", url);
+                }
             }
 
-            function closeQPopup() {
-                qPopupModal.hide();
+            async function closeGame() {
+                await window.games.find(g => g?.active)?.close();
+                
+                const url = new URL(window.location);
+                url.searchParams.delete('q');
+                url.searchParams.delete('g');
+                history.pushState({ }, "", url);
+            }
+
+            window.clickQuestion = async (gameId, id) => {
+                await openQuestion(gameId, id);
+                const url = new URL(location);
+                url.searchParams.set('g', gameId);
+                url.searchParams.set('q', id);
+                history.pushState({ g: gameId, q: id }, "", url);
+            }
+
+            async function openQPopup() {
+                if (qPopupModal._isTransitioning)
+                    window.targetQPopState = true;
+                else
+                    qPopupModal.show();
+            }
+
+            async function closeQPopup(ev) {
+                if (qPopupModal._isTransitioning)
+                    window.targetQPopState = false;
+                else
+                    qPopupModal.hide("apples");
+
+                if (ev) {
+                    const url = new URL(window.location);
+                    url.searchParams.delete('q');
+                    history.pushState({ g: Number(url.searchParams.get('g')) }, "", url);
+                }
             }
 
             function fileboxDrag(e) {
@@ -1169,7 +1263,7 @@
                     return dblQuoteCount % 2;
                 }
 
-                reader.onload = () => {
+                reader.onload = async () => {
                     const data = reader.result.replace("\r\n", "\n").split('\n').map(row => row.split(',')).map(row => row.reduce((acc, split) => {
                         const prev = acc[acc.length - 1] ?? "";
                         
@@ -1208,7 +1302,7 @@
                         game.categories[cIdx].add(... questions);
                     }
 
-                    game.open();
+                    await openGame(game.id);
                     saveGame(game.id);
                     renderGameSaves();
                 };
@@ -1220,7 +1314,7 @@
                 document.body.setAttribute("data-bs-theme", darkMode ? "dark" : "light");
             }
 
-            function toggleGameboard(doGameboard) {
+            async function toggleGameboard(doGameboard) {
                 if (doGameboard == null)
                     doGameboard = gameboard.classList.contains("d-none");
 
@@ -1245,6 +1339,7 @@
 
                     disableUndoBtn(false);
                     renderGameSaves();
+                    await closeQPopup();
                 }
 
                 return gameboard;
@@ -1270,10 +1365,18 @@
 
                 for (const item of document.getElementsByClassName('game-save')) {
                     const id = Number(item.id.split('.')[0].substring(1));
-                    item.addEventListener('click', (ev) => {
-                        window.games[id]?.open();
-                    });
+                    item.addEventListener('click', async (ev) => { await openGame(id); });
                 }
+            }
+
+            async function initialGame() {
+                const url = new URL(window.location);
+                const game = window.games[url.searchParams.get('g')];
+
+                if (game)
+                    await game.open(url.searchParams.get('q'));
+                else
+                    await openGame(window.games.findIndex(g => g?.active), null, true);
             }
 
             const csvExample = document.getElementById("example-csv-link");
@@ -1299,9 +1402,7 @@
             for (const item of document.getElementsByClassName('btn-close-q-popup'))
                 item.addEventListener('click', closeQPopup);
 
-            document.getElementById("close-game-btn").addEventListener("click", () => {
-                window.games.find(g => g?.active)?.close();
-            })
+            document.getElementById("close-game-btn").addEventListener("click", closeGame);
 
             resetBtn.addEventListener("click", () => {
                 window.games.find(g => g?.active)?.reset();
@@ -1351,21 +1452,16 @@
                 setDarkMode(event.matches);
             });
 
-            for(let i = 0; i < 100; ++i) {
-                const gamei = tryLoadGame(i);
+            for(let i = 0; i < 100; ++i)
+                tryLoadGame(i);
 
-                if (gamei) {
-                    if (gamei.active)
-                        gamei.open();
-                }
-            }
+            await initialGame();
 
             const blobUrl = URL.createObjectURL(new Blob([`GameTitle,Apples,Pears,Grapes,OtherCategory,AnotherCategory\r\n100,Add question descriptions here,Question $C$2,Question $D$2,Question $E$2,Question $F$2\r\n200,Question $B$3,Question $C$3,Question $D$3,,Question $F$3\r\n300,Question $B$4,Question $C$4,,Question $E$4,Question $F$4\r\n400,Question $B$5,"Gif links https://media1.tenor.com/m/6CLuMVze_qwAAAAd/lego-star-wars-qui-gon-jinn.gif",Question $D$5,,Question $F$5\r\n500,"You can embed youtube links https://www.youtube.com/watch?v=jNQXAC9IVRw","And image links https://images.pexels.com/photos/30800337/pexels-photo-30800337/free-photo-of-playful-border-collie-enjoying-snowy-winter-day.jpeg",Question $D$6,Question $E$6,Question $F$6`], {
                 type: "text/csv"
             }));
 
             csvExample.setAttribute("href", blobUrl);
-
 
             renderGameSaves();
         </script>
