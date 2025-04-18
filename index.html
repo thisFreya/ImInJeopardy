@@ -396,6 +396,7 @@
 
             #qPopupBodyText {
                 margin-bottom: 1rem;
+                white-space: pre-line;
             }
         </style>
     </head>
@@ -1033,8 +1034,12 @@
             qPopupModalElem.addEventListener('hidden.bs.modal', (ev) => {
                 if (window.targetQPopState === true)
                     qPopupModal.show();
-                else if (window.targetQPopState === false)
+                else if (window.targetQPopState === false) {
                     window.targetQPopState = null;
+                    clearQPopup();
+                } else {
+                    clearQPopup();
+                }
             });
 
             qPopupModalElem.addEventListener('shown.bs.modal', () => {
@@ -1064,15 +1069,39 @@
                     return (match&&match[7].length==11)? match[7] : false;
                 }
 
+                function getMimePostfix(audio) {
+                    switch (audio) {
+                        case '.aac':
+                            return "aac";
+                        case '.mp3':
+                            return "mpeg";
+                        case '.ogg':
+                            return "ogg";
+                        case '.opus':
+                            return "ogg";
+                        case '.wav':
+                            return "wav";
+                        case '.webm':
+                            return "webm";
+                        default:
+                            return "";
+                    }
+                }
+
                 // Modified from https://stackoverflow.com/a/8943487
                 function linkify(text) {
                     var urlRegex =/(\b(https?|ftp|file):\/\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|])/ig;
                     return text.replace(urlRegex, function(url) {
                         let youtubeId = false;
-                        const imgRegex = /\.(jpg|jpeg|png|gif|bmp|tif|tiff)/;
+                        let audioType = false;
+                        
+                        const imgRegex = /\.(jpg|jpeg|png|gif|bmp|tif|tiff)$/;
+                        const audioRegex = /\.(mp3|wav|ogg|aac|webm)$/;
 
                         if (url.match(imgRegex)) {
                             elements.push(`<img style="width: 100%; height: auto" src="${url}"/>`);
+                        } else if (audioType = url.match(audioRegex)?.[0]) {
+                            elements.push(`<audio controls style="width: 100%; height: auto"><source src="${url}" type="audio/${getMimePostfix(audioType)}">Your browser does not support the audio element.</audio>`);   
                         } else if (youtubeId = youtube_parser(url)) {
                             // HTML from the youtube embed helper. I'm not changing the formatting idc.
                             elements.push(`<div class="popup-iframe-container">
@@ -1091,6 +1120,14 @@
                     content: `<div id="qPopupBodyText"></div>${elements.join("")}`,
                     text: text
                 }
+            }
+
+            function clearQPopup() {
+                document.getElementById("qPopupHeadEm").textContent = "";
+                document.getElementById("qPopupHeadNEm").textContent = "";
+                document.getElementById("qPopupBody").innerHTML = "";
+                document.getElementById("qPopupHead").classList.remove("big-name");
+                document.getElementById("qPopupPlayers").innerHTML = "";
             }
 
             async function openQuestion(gameId, id) {
@@ -1264,7 +1301,13 @@
                 }
 
                 reader.onload = async () => {
-                    const data = reader.result.replace("\r\n", "\n").split('\n').map(row => row.split(',')).map(row => row.reduce((acc, split) => {
+                    const winNewlineRe = /\r\n/g;
+                    const unixNewlineRe = /\n/g;
+                    const escapedNewlineRe = /\\r\\n/g;
+                    const escapedUnixNewlineRe = /\\n/g;
+
+
+                    function reduceOpens(acc, split) {
                         const prev = acc[acc.length - 1] ?? "";
                         
                         if (isStringOpen(prev))
@@ -1273,15 +1316,40 @@
                             acc.push(split);
 
                         return acc;
-                    }, []).map(str => {
-                        let resStr = str;
-                        if (str.startsWith('"') && str.endsWith('"'))
-                            resStr = resStr.substring(1, resStr.length - 1);
+                    }
 
-                        resStr = resStr.replaceAll('""', '"');
+                    let data = reader.result
+                        .replace(escapedNewlineRe, "\r\n")
+                        .replace(winNewlineRe, "\n")
+                        .replace(escapedUnixNewlineRe, "\n")
+                        .replace(unixNewlineRe, "\r\n")
+                        .split("\r\n")
+                        .map(row => row.split(',').reduce(reduceOpens, []))
+                        .reduce((acc, row) => {
+                            const prevRow = acc[acc.length - 1] ?? [];
+                            const prevLast = prevRow[prevRow.length - 1] ?? "";
 
-                        return resStr;
-                    }));
+                            if (isStringOpen(prevLast)) {
+                                acc[acc.length - 1][prevRow.length - 1] = prevLast + "\r\n" + row[0];
+                                acc[acc.length - 1].push(... row.slice(1));
+                            } else {
+                                acc.push(row);
+                            }
+
+                            return acc;
+                        }, [])
+                        .map(row => row
+                            .reduce(reduceOpens, [])
+                            .map(str => {
+                                let resStr = str;
+                                if (str.startsWith('"') && str.endsWith('"'))
+                                    resStr = resStr.substring(1, resStr.length - 1);
+
+                                resStr = resStr.replaceAll('""', '"');
+
+                                return resStr;
+                            })
+                        );
 
                     const game = new Game(data[0][0] ? data[0][0] : "Off-brand Jeopardy! Legally Distinct!");
 
