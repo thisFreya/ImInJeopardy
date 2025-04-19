@@ -34,7 +34,7 @@
             #pageContent {
                 display: flex;
                 flex-direction: column;
-                max-width: 840px;
+                max-width: 940px;
                 transition: max-width 0.25s ease-in-out;
                 -moz-box-shadow: var(--bs-box-shadow);
                 -webkit-box-shadow: var(--bs-box-shadow);
@@ -899,7 +899,7 @@
                     const alive = this.players.filter(p => !p.killed);
                     if (!alive.length)
                         return false;
-                    return alive.some((p) => p.qs[qId] > 0) || alive.reduce((agg, p) => agg && (p.qs[qId] < 0), true);
+                    return alive.some((p) => p.qs[qId] != 0);
                 }
 
                 renderQuestionAnswer(qId) {
