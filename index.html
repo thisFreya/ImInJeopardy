@@ -131,7 +131,7 @@
                 flex-direction: column;
                 margin: 0.5rem;
                 min-width: 5rem;
-                max-width: 20%;
+                max-width: 16%;
             }
 
             .game .categoryHead {
@@ -899,7 +899,7 @@
                     const alive = this.players.filter(p => !p.killed);
                     if (!alive.length)
                         return false;
-                    return alive.some((p) => p.qs[qId] != 0);
+                    return alive.some((p) => (p.qs[qId] !== 0));
                 }
 
                 renderQuestionAnswer(qId) {
