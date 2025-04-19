@@ -899,7 +899,7 @@
                     const alive = this.players.filter(p => !p.killed);
                     if (!alive.length)
                         return false;
-                    return alive.some((p) => (p.qs[qId] !== 0));
+                    return alive.some((p) => (p.qs[qId] < 0) || (p.qs[qId] > 0));
                 }
 
                 renderQuestionAnswer(qId) {
